@@ -60,13 +60,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  lamp:
-    dependency: "direct main"
-    description:
-      name: lamp
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.6"
   matcher:
     dependency: transitive
     description:
@@ -135,6 +128,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.17"
+  torch_compat:
+    dependency: "direct main"
+    description:
+      name: torch_compat
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2"
   typed_data:
     dependency: transitive
     description:
@@ -151,3 +151,4 @@ packages:
     version: "2.0.8"
 sdks:
   dart: ">=2.9.0-14.0.dev <3.0.0"
+  flutter: ">=1.10.0 <2.0.0"
