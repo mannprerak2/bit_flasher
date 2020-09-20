@@ -13,9 +13,7 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   UiState uiState = UiState.none;
 
-  @override
-  void initState() async {
-    super.initState();
+  void checkTorch() async {
     try {
       if (await TorchCompat.hasTorch) {
         setState(() {
@@ -28,6 +26,12 @@ class _AppState extends State<App> {
         uiState = UiState.flashNotSupported;
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkTorch();
   }
 
   @override
