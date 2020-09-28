@@ -1,12 +1,14 @@
+import 'package:bit_flasher/global.dart';
+import 'package:bit_flasher/screens/receiver.dart';
+import 'package:bit_flasher/screens/sender.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:torch_compat/torch_compat.dart';
 
-List<CameraDescription> cameras;
+final global = Global();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  cameras = await availableCameras();
+  global.cameras = await availableCameras();
   runApp(App());
 }
 
@@ -16,103 +18,59 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  UiState uiState = UiState.none;
-  CameraController controller;
-
-  void checkTorch() async {
-    try {
-      if (await TorchCompat.hasTorch) {
-        setState(() {
-          uiState = UiState.flashSupported;
-        });
-      }
-    } catch (e) {
-      print(e);
-      setState(() {
-        uiState = UiState.flashNotSupported;
-      });
-    }
+  CurrentView view = CurrentView.sender;
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Column(
+          children: [
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  switch (view) {
+                    case CurrentView.sender:
+                      return SenderScreen();
+                    case CurrentView.receiver:
+                      return ReceiverScreen();
+                  }
+                  throw UnimplementedError();
+                },
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                makeButton(v: CurrentView.sender, child: Text("Send")),
+                makeButton(v: CurrentView.receiver, child: Text("Receive"))
+              ],
+            )
+          ],
+        ),
+      ),
+    );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    checkTorch();
-    controller = CameraController(cameras[0], ResolutionPreset.medium);
-    controller.initialize().then((_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {});
+  void changeView(CurrentView v) {
+    setState(() {
+      view = v;
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    switch (uiState) {
-      case UiState.flashNotSupported:
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Text(
-                "Flash not supported on Device",
-                style: TextStyle(fontSize: 20),
-              ),
-            ),
-          ),
-        );
-        break;
-      case UiState.flashSupported:
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: AspectRatio(
-                        aspectRatio: controller.value.aspectRatio,
-                        child: CameraPreview(controller)),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          TorchCompat.turnOn();
-                        },
-                        icon: Icon(Icons.flash_on),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          TorchCompat.turnOff();
-                        },
-                        icon: Icon(Icons.flash_off),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      default:
-        return Container(
-          color: Colors.white,
-        );
+  Widget makeButton({CurrentView v, Widget child}) {
+    if (v == view) {
+      return RaisedButton(
+        color: Colors.blue,
+        onPressed: () => changeView(v),
+        child: child,
+      );
+    } else {
+      return OutlineButton(
+        onPressed: () => changeView(v),
+        child: child,
+      );
     }
   }
-
-  @override
-  void dispose() {
-    TorchCompat.dispose();
-    super.dispose();
-  }
 }
 
-enum UiState {
-  none,
-  flashNotSupported,
-  flashSupported,
-}
+enum CurrentView { sender, receiver }
