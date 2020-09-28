@@ -9,6 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   torch_compat: ^1.0.2
+  camera: ^0.5.8+7
 
 
 dev_dependencies:

@@ -1,7 +1,12 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:torch_compat/torch_compat.dart';
 
-void main() {
+List<CameraDescription> cameras;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  cameras = await availableCameras();
   runApp(App());
 }
 
@@ -12,6 +17,7 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   UiState uiState = UiState.none;
+  CameraController controller;
 
   void checkTorch() async {
     try {
@@ -32,6 +38,13 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     checkTorch();
+    controller = CameraController(cameras[0], ResolutionPreset.medium);
+    controller.initialize().then((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    });
   }
 
   @override
@@ -56,17 +69,28 @@ class _AppState extends State<App> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      TorchCompat.turnOn();
-                    },
-                    icon: Icon(Icons.flash_on),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: AspectRatio(
+                        aspectRatio: controller.value.aspectRatio,
+                        child: CameraPreview(controller)),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      TorchCompat.turnOff();
-                    },
-                    icon: Icon(Icons.flash_off),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          TorchCompat.turnOn();
+                        },
+                        icon: Icon(Icons.flash_on),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          TorchCompat.turnOff();
+                        },
+                        icon: Icon(Icons.flash_off),
+                      ),
+                    ],
                   ),
                 ],
               ),
