@@ -3,6 +3,7 @@ import 'package:bit_flasher/screens/receiver.dart';
 import 'package:bit_flasher/screens/sender.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 final global = Global();
 
@@ -21,31 +22,54 @@ class _AppState extends State<App> {
   CurrentView view = CurrentView.sender;
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Column(
-          children: [
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  switch (view) {
-                    case CurrentView.sender:
-                      return SenderScreen();
-                    case CurrentView.receiver:
-                      return ReceiverScreen();
-                  }
-                  throw UnimplementedError();
-                },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FlashState()),
+        ChangeNotifierProvider(create: (_) => BitMode()),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    switch (view) {
+                      case CurrentView.sender:
+                        return SenderScreen();
+                      case CurrentView.receiver:
+                        return ReceiverScreen();
+                    }
+                    throw UnimplementedError();
+                  },
+                ),
               ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                makeButton(v: CurrentView.sender, child: Text("Send")),
-                makeButton(v: CurrentView.receiver, child: Text("Receive"))
-              ],
-            )
-          ],
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(width: 80),
+                    makeButton(v: CurrentView.sender, child: Text("Send")),
+                    makeButton(v: CurrentView.receiver, child: Text("Receive")),
+                    Consumer<BitMode>(
+                      builder: (_, bm, __) {
+                        return RawMaterialButton(
+                          onPressed: () {
+                            bm.changeMode();
+                          },
+                          fillColor: Colors.white,
+                          child: Text(bm.mode.toString().split('.').last),
+                          padding: EdgeInsets.all(15.0),
+                          shape: CircleBorder(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -61,6 +85,7 @@ class _AppState extends State<App> {
     if (v == view) {
       return RaisedButton(
         color: Colors.blue,
+        textColor: Colors.white,
         onPressed: () => changeView(v),
         child: child,
       );

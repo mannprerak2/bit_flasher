@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:torch_compat/torch_compat.dart';
+import 'package:bit_flasher/global.dart';
 
 class SenderScreen extends StatefulWidget {
   @override
@@ -8,7 +10,8 @@ class SenderScreen extends StatefulWidget {
 
 class _SenderScreenState extends State<SenderScreen> {
   UiState uiState = UiState.none;
-  bool flashOn = false;
+  final global = Global();
+
   @override
   void initState() {
     super.initState();
@@ -18,6 +21,7 @@ class _SenderScreenState extends State<SenderScreen> {
   void checkTorch() async {
     try {
       if (await TorchCompat.hasTorch) {
+        await TorchCompat.turnOff();
         setState(() {
           uiState = UiState.flashSupported;
         });
@@ -34,46 +38,76 @@ class _SenderScreenState extends State<SenderScreen> {
   Widget build(BuildContext context) {
     switch (uiState) {
       case UiState.flashNotSupported:
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Text(
-                "Flash not supported on Device",
-                style: TextStyle(fontSize: 20),
-              ),
+        return Scaffold(
+          body: Center(
+            child: Text(
+              "Flash not supported on Device",
+              style: TextStyle(fontSize: 20),
             ),
           ),
         );
         break;
       case UiState.flashSupported:
-        return MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (flashOn) {
-                        TorchCompat.turnOff();
-                      } else {
-                        TorchCompat.turnOn();
-                      }
-                      setState(() {
-                        flashOn = !flashOn;
-                      });
-                    },
-                    child: Transform.rotate(
-                      angle: 0.5,
-                      child: Icon(
-                        Icons.flash_on_sharp,
-                        size: 100,
-                        color: flashOn ? Colors.yellow : Colors.grey[300],
-                      ),
+        return Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Transform.rotate(
+                  angle: 0.5,
+                  child: Consumer<FlashState>(
+                    builder: (_, flash, child) => Icon(
+                      Icons.flash_on_sharp,
+                      size: 80,
+                      color: flash.isOn ? Colors.yellow : Colors.grey[300],
                     ),
                   ),
-                ],
-              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: TextField(
+                    controller: global.messageInput,
+                    decoration: InputDecoration(
+                      hintText: "Message",
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    RaisedButton(
+                      color: Colors.red[800],
+                      textColor: Colors.white,
+                      onPressed: () {
+                        global.msender.stop();
+                        Scaffold.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Stopping Transmission"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: Text("Stop"),
+                    ),
+                    OutlineButton(
+                      child: Text("Clear"),
+                      onPressed: global.messageInput.clear,
+                    ),
+                    RaisedButton(
+                      color: Colors.green[800],
+                      textColor: Colors.white,
+                      child: Text("Transmit"),
+                      onPressed: () {
+                        global.msender.send(
+                          global.messageInput.text,
+                          Provider.of<FlashState>(context, listen: false),
+                          Provider.of<BitMode>(context, listen: false).mode,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         );
