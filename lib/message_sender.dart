@@ -7,7 +7,6 @@ import 'modulators/nrz.dart';
 enum Mode { MOR, PWM, NRZ }
 
 class MessageSender {
-  static const flashDuration = Duration(milliseconds: 30);
   final morseModulator = MorseModulator();
   final pwmModulator = PWMModulator();
   final nrzModulator = NRZModulator();
@@ -16,7 +15,9 @@ class MessageSender {
     shoudldStop = true;
   }
 
-  void send(String message, FlashState flasher, Mode mode) async {
+  void send(String message, FlashState flasher, Mode mode, int millisec) async {
+    final flashDuration = Duration(milliseconds: millisec);
+
     final payload = _makePayload(mode, message);
     shoudldStop = false;
     // TODO: add message header.

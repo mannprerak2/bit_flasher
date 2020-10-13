@@ -11,6 +11,7 @@ dependencies:
   torch_compat: ^1.0.2
   camera: ^0.5.8+7
   provider: ^4.3.2+2
+  numberpicker: ^1.2.1
 
 
 dev_dependencies:

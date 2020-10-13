@@ -102,6 +102,8 @@ class _SenderScreenState extends State<SenderScreen> {
                           global.messageInput.text,
                           Provider.of<FlashState>(context, listen: false),
                           Provider.of<BitMode>(context, listen: false).mode,
+                          Provider.of<FlashDuration>(context, listen: false)
+                              .millisec,
                         );
                       },
                     ),

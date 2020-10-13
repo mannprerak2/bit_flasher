@@ -4,6 +4,7 @@ import 'package:bit_flasher/screens/sender.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:numberpicker/numberpicker.dart';
 
 final global = Global();
 
@@ -26,6 +27,7 @@ class _AppState extends State<App> {
       providers: [
         ChangeNotifierProvider(create: (_) => FlashState()),
         ChangeNotifierProvider(create: (_) => BitMode()),
+        ChangeNotifierProvider(create: (_) => FlashDuration()),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -49,7 +51,28 @@ class _AppState extends State<App> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(width: 80),
+                    Consumer<FlashDuration>(
+                      builder: (_, fl, __) {
+                        return RawMaterialButton(
+                          onPressed: () {
+                            showDialog<int>(
+                              context: _,
+                              builder: (_) => NumberPickerDialog.integer(
+                                  minValue: 10,
+                                  maxValue: 500,
+                                  step: 5,
+                                  initialIntegerValue: fl.millisec),
+                            ).then((value) {
+                              if (value != null) fl.setDuration(value);
+                            });
+                          },
+                          fillColor: Colors.white,
+                          child: Text(fl.millisec.toString()),
+                          padding: EdgeInsets.all(15.0),
+                          shape: CircleBorder(),
+                        );
+                      },
+                    ),
                     makeButton(v: CurrentView.sender, child: Text("Send")),
                     makeButton(v: CurrentView.receiver, child: Text("Receive")),
                     Consumer<BitMode>(
