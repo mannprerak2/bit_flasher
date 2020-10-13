@@ -21,15 +21,22 @@ class FlashState extends ChangeNotifier {
   bool _isOn = false;
 
   bool get isOn => _isOn;
+  bool get isOff => !_isOn;
 
-  void turnOn(bool flash) {
-    if (flash) {
+  void turnOn() {
+    if (!_isOn) {
       TorchCompat.turnOn();
-    } else {
-      TorchCompat.turnOff();
+      _isOn = true;
+      notifyListeners();
     }
-    _isOn = flash;
-    notifyListeners();
+  }
+
+  void turnOff() {
+    if (_isOn) {
+      TorchCompat.turnOff();
+      _isOn = false;
+      notifyListeners();
+    }
   }
 }
 
