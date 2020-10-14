@@ -53,7 +53,7 @@ class BitMode extends ChangeNotifier {
 }
 
 class FlashDuration extends ChangeNotifier {
-  int _millisec = 30;
+  int _millisec = 60;
 
   int get millisec => _millisec;
 

@@ -24,6 +24,7 @@ class MessageSender {
     for (final bit in payload) {
       if (bit) {
         flasher.turnOn();
+      } else {
         flasher.turnOff();
       }
       await Future.delayed(flashDuration);

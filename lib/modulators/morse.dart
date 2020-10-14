@@ -1,18 +1,47 @@
 import 'package:bit_flasher/modulators/modulator.dart';
-import 'package:flutter/material.dart';
+import 'package:characters/characters.dart';
+import 'package:collection/collection.dart';
 
 class MorseModulator extends Modulator {
   @override
   String decode(List<bool> bits) {
-    // TODO: implement decode
-    throw UnimplementedError();
+    final comparator = IterableEquality();
+
+    final sb = StringBuffer();
+    for (final bit in bits) {
+      sb.write(bit ? "1" : "0");
+    }
+    final bitString = sb.toString();
+    sb.clear();
+
+    for (final char in bitString.split('000')) {
+      if (char.isEmpty) continue;
+      final tl = <int>[];
+      for (final ones in char.split('0')) {
+        tl.add(ones.length);
+      }
+      bool found = false;
+      for (final key in _charList.keys) {
+        if (comparator.equals(_charList[key], tl)) {
+          found = true;
+          sb.write(key);
+          break;
+        }
+      }
+
+      if (!found) {
+        throw Exception("Unknown morse character");
+      }
+    }
+    return sb.toString();
   }
 
-  /// "a" is [1,3] and is converted to 101110
+  /// "a" is [1,3], "a" is converted to 101110
+  /// "e" is [1], "ee" is converted to 1000010
   @override
   List<bool> encode(String message) {
     final list = <bool>[];
-    for (final char in message.characters) {
+    for (final char in message.characters.toLowerCase()) {
       if (_charList.containsKey(char)) {
         for (final i in _charList[char]) {
           for (int x = 0; x < i; x++) {
@@ -21,8 +50,7 @@ class MorseModulator extends Modulator {
           // gap between 2 dots in same character.
           list.add(false);
         }
-        // gap between 2 characters
-        list.add(false);
+        // gap between 2 characters = 3 false (2 here and 1 from before)
         list.add(false);
         list.add(false);
       }
