@@ -98,6 +98,9 @@ class _SenderScreenState extends State<SenderScreen> {
                       textColor: Colors.white,
                       child: Text("Transmit"),
                       onPressed: () {
+                        if (global.messageInput.text.isEmpty) {
+                          return;
+                        }
                         global.msender.send(
                           global.messageInput.text,
                           Provider.of<FlashState>(context, listen: false),

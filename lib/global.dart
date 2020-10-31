@@ -4,6 +4,9 @@ import 'package:torch_compat/torch_compat.dart';
 
 import 'message_sender.dart';
 
+const flagByte = '11100111';
+const escapeByte = '00011011';
+
 class Global {
   List<CameraDescription> cameras;
   final messageInput = TextEditingController();
