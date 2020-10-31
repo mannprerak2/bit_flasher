@@ -70,7 +70,7 @@ class MessageSender {
 extension on String {
   /// Convert string like 100110101 to list<bool>.
   List<bool> toBoolList() {
-    List<bool> res;
+    List<bool> res = [];
     for (var i = 0; i < this.length; i++) {
       if (this[i] == '1') {
         res.add(true);
