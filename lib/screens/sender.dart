@@ -10,6 +10,7 @@ class SenderScreen extends StatefulWidget {
 
 class _SenderScreenState extends State<SenderScreen> {
   UiState uiState = UiState.none;
+  bool withDelimeters = false;
   final global = Global();
 
   @override
@@ -107,7 +108,16 @@ class _SenderScreenState extends State<SenderScreen> {
                           Provider.of<BitMode>(context, listen: false).mode,
                           Provider.of<FlashDuration>(context, listen: false)
                               .millisec,
+                          withDelimeters: withDelimeters,
                         );
+                      },
+                    ),
+                    OutlineButton(
+                      child: Text(withDelimeters ? "Del" : "NoDel"),
+                      onPressed: () {
+                        setState(() {
+                          withDelimeters = !withDelimeters;
+                        });
                       },
                     ),
                   ],
