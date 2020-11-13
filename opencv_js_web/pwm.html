@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Flash Detector</title>
+    <link href="app.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <h1>BitFlash Detector</h1>
+    <div>
+      <button id="actionBtn">Start</button>
+    </div>
+    <video id="video" width="300" height="225"></video>
+    <canvas id="canvasOutput"></canvas>
+    <script
+      async
+      src="opencv.js"
+      type="text/javascript"
+      onload="onCvLoaded();"
+    ></script>
+    <script>
+      function onCvLoaded() {
+        console.log("cv", cv);
+        cv.onRuntimeInitialized = onReady;
+      }
+      const video = document.getElementById("video");
+      const actionBtn = document.getElementById("actionBtn");
+      const width = 300;
+      const height = 225;
+      const FPS = 90;
+      let stream;
+      let streaming = false;
+      let curState = "";
+      let prevState = "";
+      //let start= datetime.now()
+      //let end=0;
+      let time = 0.1;
+      let one = Math.round((0.9 * time + Number.EPSILON) * 100) / 100;
+      let three = Math.round((2.3 * time + Number.EPSILON) * 100) / 100;
+      let four = Math.round((3.4 * time + Number.EPSILON) * 100) / 100;
+      let seven = Math.round((4.6 * time + Number.EPSILON) * 100) / 100;
+      let lightList = [[one], [three], [seven]];
+      let darkList = [[one], [four]];
+      let flash_list = [];
+      let resList = [];
+      let decoded = "";
+      let message = "";
+      let flag = 1;
+      let valList = {
+        [one]: "1",
+        [three]: "111",
+        [four]: "0000",
+        [seven]: "1111111",
+      };
+
+      function onReady() {
+        // Called when OpenCV is ready to be used.
+        let src;
+        let dst;
+        let curFrame = null;
+        let prevFrame = null;
+        let myStddev;
+        let myMean;
+        let ksize;
+        let anchor;
+        let blurred;
+        const cap = new cv.VideoCapture(video);
+
+        actionBtn.addEventListener("click", () => {
+          if (streaming) {
+            stop();
+            actionBtn.textContent = "Start";
+          } else {
+            start();
+            actionBtn.textContent = "Stop";
+          }
+        });
+
+        function start() {
+          navigator.mediaDevices
+            .getUserMedia({ video: true, audio: false })
+            .then((_stream) => {
+              stream = _stream;
+              console.log("stream", stream);
+              video.srcObject = stream;
+              video.play();
+              streaming = true;
+              src = new cv.Mat(height, width, cv.CV_8UC4);
+              dst = new cv.Mat(height, width, cv.CV_8UC1);
+              //curFrame = new cv.Mat(height, width, cv.CV_8UC4);
+              //prevFrame = new cv.Mat(height, width, cv.CV_8UC4);
+              blurred = new cv.Mat(height, width, cv.CV_8UC4);
+              myMean = new cv.Mat(1, 4, cv.CV_64F);
+              myStddev = new cv.Mat(1, 4, cv.CV_64F);
+              ksize = new cv.Size(5, 5);
+              anchor = new cv.Point(-1, -1);
+              setTimeout(processVideo, 0);
+            })
+            .catch((err) => console.log(`An error occurred: ${err}`));
+        }
+
+        function stop() {
+          if (video) {
+            video.pause();
+            video.srcObject = null;
+          }
+          if (stream) {
+            stream.getVideoTracks()[0].stop();
+          }
+          streaming = false;
+          flash_list = flash_list.slice(1);
+          console.log(flash_list);
+          console.log(Object.keys(valList)[0] == one);
+          //console.log(lightList, darkList);
+          for (var i = 0; i < flash_list.length; i++) {
+            if (flag % 2) {
+              var min = 100;
+              var pos = 0;
+              for (var p = 0; p < lightList.length; p++) {
+                if (Math.abs(flash_list[i] - lightList[p]) < min) {
+                  pos = p;
+                  min = Math.abs(flash_list[i] - lightList[p]);
+                }
+              }
+              resList.push([lightList[pos], "l"]);
+            } else {
+              var min = 100;
+              var pos = 0;
+              for (var p = 0; p < darkList.length; p++) {
+                if (Math.abs(flash_list[i] - darkList[p]) < min) {
+                  pos = p;
+                  min = Math.abs(flash_list[i] - darkList[p]);
+                }
+              }
+              resList.push([darkList[pos], "d"]);
+            }
+            flag = (flag + 1) % 2;
+          }
+          /*for i in range(0,len(resList)):
+                print(i)
+                print("flash",flash_list[i])
+                print("res",resList[i])*/
+
+          for (var i = 0; i < resList.length - 1; i++) {
+            if (resList[i][0] == one && resList[i][1] == "d") {
+              decoded += "0";
+              continue;
+            }
+            if (
+              resList[i][1] == "l" &&
+              flash_list[i + 1] > 0.6 &&
+              not(i == len(resList) - 2)
+            ) {
+              decoded += valList[seven];
+              continue;
+            }
+            for (var x = 0; x < valList.length; x++) {
+              if (resList[i][0] == Object.keys(valList)[x])
+                decoded += valList[x];
+            }
+          }
+          console.log("resList", resList);
+          console.log(resList[-1]);
+          /*for x in valList:
+                    if resList[-1][0]==x:
+                        decoded+= valList[x]
+            for i in range(0,len(resList)):
+                if resList[i][1]=="l" and flash_list[i-1]>0.6 and not(i==(len(resList)-1)):
+                    print(i-2,",",resList[i-2])
+
+            print(decoded)
+            p=decoded.split("0000")
+            for i in p:
+                ones=i.split("0")
+                ones=[x for x in ones if x]
+                print(ones)
+                one_list=[]
+                for l in ones:
+                    one_list.append(l.count('1'))
+                for key,value in charList.items():
+                    if one_list==value:
+                        message+=key
+            print(message)*/
+        }
+
+        function processVideo() {
+          if (!streaming) {
+            src.delete();
+            dst.delete();
+            //ksize.delete();
+            //anchor.delete();
+            myMean.delete();
+            myStddev.delete();
+            return;
+          }
+          const begin = Date.now();
+          cap.read(src);
+          cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+          cv.imshow("canvasOutput", dst);
+          const delay = 1000 / FPS - (Date.now() - begin);
+          cv.blur(src, blurred, ksize, anchor, cv.BORDER_DEFAULT);
+
+          cv.meanStdDev(blurred, myMean, myStddev);
+          //console.log("myMean:", myMean[2]);
+          curFrame = myMean.doubleAt(0, 0);
+          //curFrame=cv.meanStddev(blur)[0];
+          if (curFrame > 140) {
+            curState = "light";
+          } else {
+            curState = "dark";
+          }
+          //console.log(curFrame, curState);
+          if (prevFrame == null) {
+            prevFrame = curFrame;
+            prevState = curState;
+            start = Date.now();
+          } else if (prevState != curState) {
+            end = Date.now();
+            diff = end - start;
+            //console.log(diff);
+            console.log((diff / 1000).toString(), prevState, "->", curState);
+            start = Date.now();
+            flash_list.push(diff / 1000);
+          }
+
+          prevFrame = curFrame;
+          prevState = curState;
+
+          /*cap = cv.VideoCapture(0)
+
+              while(True):
+                  //// Capture frame-by-frame
+                  ret, frame = cap.read()
+
+                  // Our operations on the frame come here
+                  gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                  //ret,thresh1 = cv2.threshold(frame,127,255,cv2.THRESH_BINARY)
+                  blur= cv2.blur(gray,(5,5))
+                  //print(cv2.mean(blur))
+                  curFrame=cv2.mean(blur)[0]
+                  if curFrame>127:
+                      //print("light")
+                      curState="light"
+                  else:
+                  // print("dark")
+                      curState="dark"
+                  if prevFrame==None:
+                      prevFrame=curFrame
+                      prevState=curState
+                      start=datetime.now()
+                  elif prevState!=curState:
+                      end=datetime.now()
+                      diff=end-start
+                      print(str(diff),prevState,"->",curState)
+                      start=datetime.now()
+                      flash_list.append(diff.microseconds/1000000)
+
+                  prevFrame=curFrame
+                  prevState=curState
+                  // Display the resulting frame
+                  cv2.imshow('frame',gray)
+                  if cv2.waitKey(1) & 0xFF == ord('q'):
+                      break
+                  if (datetime.now()-start).seconds>4:
+                      print("No signal detected")
+                      break
+
+              // When everything done, release the capture
+              cap.release()
+              cv2.destroyAllWindows()
+              //p=101110111010
+
+              for i in flash_list:
+                  if flag%2:
+                      resList.append([(min(lightList, key=lambda x:abs(x-i))),"l"])
+                  else:
+                      resList.append([(min(darkList, key= lambda x:abs(x-i))),"d"])
+                  flag=(flag+1)%2
+              for i in range(0,len(resList)):
+                  print(i)
+                  print("flash",flash_list[i])
+                  print("res",resList[i])
+
+              for i in range(0,len(resList)-1):
+                  if resList[i][0]==one and resList[i][1]=="d":
+                          decoded+="0"
+                          continue
+                  if resList[i][1]=="l" and flash_list[i+1]>0.6 and not(i==(len(resList)-2)):
+                      decoded+=valList[seven]
+                      continue
+                  for x in valList:
+                      if resList[i][0]==x:
+                          decoded+= valList[x]
+
+              print(resList[-1])
+              for x in valList:
+                      if resList[-1][0]==x:
+                          decoded+= valList[x]
+              for i in range(0,len(resList)):
+                  if resList[i][1]=="l" and flash_list[i-1]>0.6 and not(i==(len(resList)-1)):
+                      print(i-2,",",resList[i-2])
+
+              print(decoded)
+              p=decoded.split("0000")
+              for i in p:
+                  ones=i.split("0")
+                  ones=[x for x in ones if x]
+                  print(ones)
+                  one_list=[]
+                  for l in ones:
+                      one_list.append(l.count('1'))
+                  for key,value in charList.items():
+                      if one_list==value:
+                          message+=key
+              print(message)*/
+          //}
+
+          setTimeout(processVideo, delay);
+        }
+      }
+    </script>
+  </body>
+</html>
