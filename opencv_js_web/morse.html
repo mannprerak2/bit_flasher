@@ -248,7 +248,7 @@
           cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
           cv.imshow("canvasOutput", dst);
           const delay = 1000 / FPS - (Date.now() - begin);
-          cv.blur(src, blurred, ksize, anchor, cv.BORDER_DEFAULT);
+          cv.blur(dst, blurred, ksize, anchor, cv.BORDER_DEFAULT);
 
           cv.meanStdDev(blurred, myMean, myStddev);
           //console.log("myMean:", myMean[2]);
