@@ -4,15 +4,26 @@
 <head>
     <title>Flash Detector</title>
     <link href="app.css" rel="stylesheet" />
+    <link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 
 <body>
     <h1>BitFlash Detector</h1>
     <div>
-        <a href="morse.html"><button id="actionBtn">Morse</button></a>
-        <a href="pwm.html"><button id="actionBtn">PWM - Pulse Width Modulation</button></a>
+        <button class="btn-primary" id="actionBtn" onclick="loadMorse()">Morse</button>
+        <button class="btn-primary" id="actionBtn" onclick="loadPwm()">PWM - Pulse Width Modulation</button>
+    </div>
+    <div id="iframe-div" style="width: 100%; height: 100%;">
     </div>
 
 </body>
+<script>
+    function loadMorse() {
+        document.getElementById('iframe-div').innerHTML = "<iframe src='morse.html'></iframe>"
+    }
+    function loadPwm() {
+        document.getElementById('iframe-div').innerHTML = "<iframe src='pwm.html'></iframe>"
+    }
+</script>
 
 </html>

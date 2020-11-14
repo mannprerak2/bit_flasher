@@ -3,15 +3,19 @@
   <head>
     <title>Flash Detector</title>
     <link href="app.css" rel="stylesheet" />
+    <link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet" />
   </head>
 
   <body>
-    <h1>BitFlash Detector</h1>
+    <h1>PWM Decoder</h1>
+    <h5 id="tq" onclick="updateTimeQuantum()">Time unit - 100ms</h5>
     <div>
-      <button id="actionBtn">Start</button>
+      <button class="btn-success" id="actionBtn">Start</button>
     </div>
     <video id="video" width="300" height="225"></video>
     <canvas id="canvasOutput"></canvas>
+    <h3>Message -</h3>
+    <h3 id="logdiv" style="border: 1px solid black; padding: 10px;"></h3>
     <script
       async
       src="opencv.js"
@@ -23,6 +27,8 @@
         console.log("cv", cv);
         cv.onRuntimeInitialized = onReady;
       }
+      const logDiv = document.getElementById("logdiv");
+      const tq = document.getElementById("tq");
       const video = document.getElementById("video");
       const actionBtn = document.getElementById("actionBtn");
       const width = 300;
@@ -32,8 +38,15 @@
       let streaming = false;
       let curState = "";
       let prevState = "";
-      let time = 0.1;
-      let one = Math.round((0.9 * time + Number.EPSILON) * 100) / 100;
+      var time = 0.1;
+      function updateTimeQuantum(){
+        var raw = prompt('Enter new time unit (10-500)');
+        if(raw){
+          var num = parseInt(raw);
+          tq.innerText = 'Time Unit - '+raw+'ms';
+          time = num/1000;
+        }
+      }      let one = Math.round((0.9 * time + Number.EPSILON) * 100) / 100;
       let three = Math.round((2.2 * time + Number.EPSILON) * 100) / 100;
       //let four = Math.round((3.4 * time + Number.EPSILON) * 100) / 100;
       //let seven = Math.round((4.6 * time + Number.EPSILON) * 100) / 100;
@@ -161,6 +174,7 @@
             console.log(String.fromCharCode(decimal));
           }
           console.log(message);
+          logDiv.innerText+=message+'\n';
         }
 
         function processVideo() {
@@ -176,9 +190,10 @@
           const begin = Date.now();
           cap.read(src);
           cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-          cv.imshow("canvasOutput", dst);
           const delay = 1000 / FPS - (Date.now() - begin);
           cv.blur(src, blurred, ksize, anchor, cv.BORDER_DEFAULT);
+
+          cv.imshow("canvasOutput", blurred);
 
           cv.meanStdDev(blurred, myMean, myStddev);
           //console.log("myMean:", myMean[2]);
