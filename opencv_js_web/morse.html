@@ -269,7 +269,7 @@
           //console.log("myMean:", myMean[2]);
           curFrame = myMean.doubleAt(0, 0);
           //curFrame=cv.meanStddev(blur)[0];
-          if (curFrame > 140) {
+          if (curFrame > 50) {
             curState = "light";
           } else {
             curState = "dark";
